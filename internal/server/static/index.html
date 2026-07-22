@@ -36,12 +36,17 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 <div class="container">
   <h1>Union 角色查询</h1>
 
-  <div id="authorized-msg" class="hidden msg-authorized">授权完成，现在可以查询角色。</div>
+  <div id="authorized-msg" class="hidden msg-authorized">授权完成，现在可以查询和管理角色。</div>
 
   <div class="card">
     <h2><span class="step-badge">1</span> 授权</h2>
     <p style="margin-bottom:1rem;color:#666;">需要先授权 union-svc 访问你的 Element-Skin 账户。</p>
     <a class="btn-link" href="oauth/authorize">授权</a>
+  </div>
+
+  <div class="card" id="security-card" style="display:none;">
+    <h2>安全等级</h2>
+    <p>当前安全等级: <strong id="security-level">-</strong></p>
   </div>
 
   <div class="card">
@@ -52,6 +57,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     </div>
     <div id="query-status" class="hidden" style="margin-top:.75rem;"></div>
     <ul id="profile-list" class="profile-list hidden"></ul>
+    <div id="action-status" class="hidden" style="margin-top:.75rem;"></div>
   </div>
 
   </div>
@@ -62,20 +68,26 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   const queryBtn = document.getElementById('query-btn');
   const queryStatus = document.getElementById('query-status');
   const profileList = document.getElementById('profile-list');
+  const actionStatus = document.getElementById('action-status');
 
   let profiles = [];
 
-  // Show authorized message if ?authorized=true
   if (new URLSearchParams(location.search).get('authorized') === 'true') {
     document.getElementById('authorized-msg').classList.remove('hidden');
   }
 
-  // Enable query button only when input is non-empty
+  fetch('api/union/security/level')
+    .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+    .then(function(d) {
+      document.getElementById('security-level').textContent = d.level;
+      document.getElementById('security-card').style.display = '';
+    })
+    .catch(function() {});
+
   usernameInput.addEventListener('input', function() {
     queryBtn.disabled = this.value.trim() === '';
   });
 
-  // Query profiles
   queryBtn.addEventListener('click', function() {
     const username = usernameInput.value.trim();
     if (!username) return;
@@ -112,10 +124,62 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     profileList.innerHTML = '';
     items.forEach(function(p) {
       var li = document.createElement('li');
-      li.textContent = p.name + ' (' + p.uuid + ')';
+      li.style.display = 'flex';
+      li.style.justifyContent = 'space-between';
+      li.style.alignItems = 'center';
+
+      var span = document.createElement('span');
+      span.textContent = p.name + ' (' + p.uuid + ')';
+
+      var btnGroup = document.createElement('div');
+      btnGroup.style.display = 'flex';
+      btnGroup.style.gap = '.25rem';
+
+      var bindBtn = document.createElement('button');
+      bindBtn.textContent = '绑定';
+      bindBtn.style.padding = '.3rem .8rem';
+      bindBtn.style.fontSize = '.85rem';
+      bindBtn.addEventListener('click', function() { doAction('bind', p); });
+
+      var unbindBtn = document.createElement('button');
+      unbindBtn.textContent = '解绑';
+      unbindBtn.style.padding = '.3rem .8rem';
+      unbindBtn.style.fontSize = '.85rem';
+      unbindBtn.style.background = '#f56c6c';
+      unbindBtn.addEventListener('click', function() { doAction('unbind', p); });
+
+      btnGroup.appendChild(bindBtn);
+      btnGroup.appendChild(unbindBtn);
+      li.appendChild(span);
+      li.appendChild(btnGroup);
       profileList.appendChild(li);
     });
     profileList.classList.remove('hidden');
+  }
+
+  function doAction(action, profile) {
+    fetch('api/union/profile/' + action, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uuid: profile.uuid })
+    })
+      .then(function(r) {
+        if (!r.ok) return r.json().then(function(e) { throw new Error(e.detail || '操作失败'); });
+        return r.json().catch(function() { return {}; });
+      })
+      .then(function() {
+        showActionStatus('ok', action === 'bind' ? '绑定成功' : '解绑成功');
+      })
+      .catch(function(err) {
+        showActionStatus('err', err.message || '操作失败');
+      });
+  }
+
+  function showActionStatus(type, msg) {
+    actionStatus.className = 'msg-info msg-' + (type === 'ok' ? 'success' : 'error');
+    actionStatus.textContent = msg;
+    actionStatus.classList.remove('hidden');
+    setTimeout(function() { actionStatus.classList.add('hidden'); }, 3000);
   }
 
   function showQueryStatus(type, msg) {

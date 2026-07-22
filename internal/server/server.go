@@ -14,7 +14,7 @@ import (
 	"github.com/Lylighte/elementskin-union-svc/internal/union"
 )
 
-//go:embed static/index.html
+//go:embed static/index.html static/admin.html static/admin.js
 var staticFiles embed.FS
 
 func indexHTML(logger *slog.Logger) []byte {
@@ -108,7 +108,7 @@ func (s *Server) routes() {
 	})
 	s.mux.HandleFunc(s.route("/oauth/authorize"), s.handleAuthorize)
 	s.mux.HandleFunc(s.route("/oauth/callback"), s.handleCallback)
-	s.mux.HandleFunc(s.route("/api/profiles"), s.withBearerToken(s.handleListProfiles))
+	s.mux.HandleFunc(s.route("/api/profiles"), s.withBearerOrSession(s.handleListProfiles))
 	s.mux.HandleFunc(s.route("GET /api/union/member/"), s.handleUnionHello)
 	s.mux.HandleFunc(s.route("POST /api/union/member/updatelist"), s.withUnionVerify(s.handleUpdateList))
 	s.mux.HandleFunc(s.route("POST /api/union/member/updateprivatekey"), s.withUnionVerify(s.handleUpdatePrivateKey))
@@ -133,12 +133,34 @@ func (s *Server) routes() {
 	s.mux.HandleFunc(s.route("GET /api/union/admin/keypair-fingerprint"), s.withRateLimit(s.withAdminAPIKey(s.handleAdminKeypairFingerprint)))
 	s.mux.HandleFunc(s.route("POST /api/union/admin/regenerate-keypair"), s.withRateLimit(s.withAdminAPIKey(s.handleAdminRegenerateKeypair)))
 
-	s.mux.HandleFunc(s.route("POST /api/union/profile/bind"), s.withBearerToken(s.handleProfileBind))
-	s.mux.HandleFunc(s.route("POST /api/union/profile/unbind"), s.withBearerToken(s.handleProfileUnbind))
-	s.mux.HandleFunc(s.route("POST /api/union/profile/bindto"), s.withBearerToken(s.handleProfileBindTo))
-	s.mux.HandleFunc(s.route("GET /api/union/security/level"), s.withBearerToken(s.handleSecurityLevel))
+	s.mux.HandleFunc(s.route("POST /api/union/profile/bind"), s.withBearerOrSession(s.handleProfileBind))
+	s.mux.HandleFunc(s.route("POST /api/union/profile/unbind"), s.withBearerOrSession(s.handleProfileUnbind))
+	s.mux.HandleFunc(s.route("POST /api/union/profile/bindto"), s.withBearerOrSession(s.handleProfileBindTo))
+	s.mux.HandleFunc(s.route("GET /api/union/security/level"), s.withBearerOrSession(s.handleSecurityLevel))
 
 	s.mux.HandleFunc(s.route("POST /api/union/webhook/profile-sync"), s.withWebhookSecret(s.handleProfileSyncWebhook))
+
+	s.mux.HandleFunc(s.route("/admin"), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; object-src 'none'; base-uri 'self'")
+		b, err := staticFiles.ReadFile("static/admin.html")
+		if err != nil {
+			s.logger.Error("failed to read embedded static/admin.html", "error", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		_, _ = w.Write(b)
+	})
+	s.mux.HandleFunc(s.route("/admin.js"), func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		b, err := staticFiles.ReadFile("static/admin.js")
+		if err != nil {
+			s.logger.Error("failed to read embedded static/admin.js", "error", err)
+			http.Error(w, "internal error", http.StatusInternalServerError)
+			return
+		}
+		_, _ = w.Write(b)
+	})
 
 	s.mux.HandleFunc(root, func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != root {
