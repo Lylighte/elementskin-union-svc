@@ -5,6 +5,7 @@
 server:
   addr: ""
   port: 8001
+  root_path: ""  # 子路径前缀，如 "/union-svc"。空字符串=根路径部署
 
 elementskin:
   base_url: ""

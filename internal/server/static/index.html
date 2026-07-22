@@ -41,7 +41,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   <div class="card">
     <h2><span class="step-badge">1</span> 授权</h2>
     <p style="margin-bottom:1rem;color:#666;">需要先授权 union-svc 访问你的 Element-Skin 账户。</p>
-    <a class="btn-link" href="/oauth/authorize">授权</a>
+    <a class="btn-link" href="oauth/authorize">授权</a>
   </div>
 
   <div class="card">
@@ -85,7 +85,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
     showQueryStatus('info', '正在查询...');
     profileList.classList.add('hidden');
 
-    fetch('/api/profiles?username=' + encodeURIComponent(username))
+    fetch('api/profiles?username=' + encodeURIComponent(username))
       .then(function(r) {
         if (!r.ok) return r.json().then(function(e) { throw new Error(e.detail || '查询失败'); });
         return r.json();

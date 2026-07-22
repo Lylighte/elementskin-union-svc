@@ -133,7 +133,7 @@ func (s *Server) handleCallback(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	http.Redirect(w, r, "/?authorized=true", http.StatusFound)
+	http.Redirect(w, r, s.cfg.Server.RootPath+"/?authorized=true", http.StatusFound)
 }
 
 // authorizeURLForConfig is a test helper that returns the redirect URL a

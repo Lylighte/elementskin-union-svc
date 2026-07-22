@@ -13,8 +13,9 @@ import (
 // Config holds the union-svc runtime configuration.
 type Config struct {
 	Server struct {
-		Addr string `yaml:"addr" env:"SERVER_ADDR"`
-		Port int    `yaml:"port" env:"SERVER_PORT"`
+		Addr     string `yaml:"addr" env:"SERVER_ADDR"`
+		Port     int    `yaml:"port" env:"SERVER_PORT"`
+		RootPath string `yaml:"root_path" env:"ROOT_PATH"`
 	} `yaml:"server"`
 	Elementskin struct {
 		BaseURL string `yaml:"base_url" env:"ELEMENTSKIN_BASE_URL"`
@@ -60,6 +61,7 @@ func defaults() Config {
 	var cfg Config
 	cfg.Server.Addr = ""
 	cfg.Server.Port = 8001
+	cfg.Server.RootPath = ""
 	// Network-address defaults are intentionally empty — they must be
 	// provided explicitly via config file or environment variable in production.
 	cfg.Elementskin.BaseURL = ""

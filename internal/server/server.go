@@ -94,39 +94,44 @@ func New(cfg config.Config, logger *slog.Logger) (*Server, error) {
 	return s, nil
 }
 
+func (s *Server) route(path string) string {
+	return s.cfg.Server.RootPath + path
+}
+
 func (s *Server) routes() {
-	s.mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+	root := s.route("/")
+	s.mux.HandleFunc(s.route("/health"), func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"status":"ok"}`))
 	})
-	s.mux.HandleFunc("/oauth/authorize", s.handleAuthorize)
-	s.mux.HandleFunc("/oauth/callback", s.handleCallback)
-	s.mux.HandleFunc("/api/profiles", s.withBearerToken(s.handleListProfiles))
-	s.mux.HandleFunc("GET /api/union/member/", s.handleUnionHello)
-	s.mux.HandleFunc("POST /api/union/member/updatelist", s.withUnionVerify(s.handleUpdateList))
-	s.mux.HandleFunc("POST /api/union/member/updateprivatekey", s.withUnionVerify(s.handleUpdatePrivateKey))
-	s.mux.HandleFunc("POST /api/union/member/updatebackendkey", s.withUnionVerify(s.handleUpdateBackendKey))
-	s.mux.HandleFunc("POST /api/union/member/sync", s.withUnionVerify(s.handleSync))
-	s.mux.HandleFunc("GET /api/union/member/queryemail", s.withUnionVerify(s.handleQueryEmail))
-	s.mux.HandleFunc("POST /api/union/member/diagnose", s.withUnionVerify(s.handleDiagnose))
+	s.mux.HandleFunc(s.route("/oauth/authorize"), s.handleAuthorize)
+	s.mux.HandleFunc(s.route("/oauth/callback"), s.handleCallback)
+	s.mux.HandleFunc(s.route("/api/profiles"), s.withBearerToken(s.handleListProfiles))
+	s.mux.HandleFunc(s.route("GET /api/union/member/"), s.handleUnionHello)
+	s.mux.HandleFunc(s.route("POST /api/union/member/updatelist"), s.withUnionVerify(s.handleUpdateList))
+	s.mux.HandleFunc(s.route("POST /api/union/member/updateprivatekey"), s.withUnionVerify(s.handleUpdatePrivateKey))
+	s.mux.HandleFunc(s.route("POST /api/union/member/updatebackendkey"), s.withUnionVerify(s.handleUpdateBackendKey))
+	s.mux.HandleFunc(s.route("POST /api/union/member/sync"), s.withUnionVerify(s.handleSync))
+	s.mux.HandleFunc(s.route("GET /api/union/member/queryemail"), s.withUnionVerify(s.handleQueryEmail))
+	s.mux.HandleFunc(s.route("POST /api/union/member/diagnose"), s.withUnionVerify(s.handleDiagnose))
 
-	s.mux.HandleFunc("GET /api/union/member/oauth2/", s.handleOAuth2GetSigPublicKey)
-	s.mux.HandleFunc("GET /api/union/member/oauth2/grant", s.handleOAuth2Grant)
+	s.mux.HandleFunc(s.route("GET /api/union/member/oauth2/"), s.handleOAuth2GetSigPublicKey)
+	s.mux.HandleFunc(s.route("GET /api/union/member/oauth2/grant"), s.handleOAuth2Grant)
 
-	s.mux.HandleFunc("GET /api/union/admin/blacklist", s.withAdminAPIKey(s.handleBlacklistList))
-	s.mux.HandleFunc("POST /api/union/admin/blacklist", s.withAdminAPIKey(s.handleBlacklistCreate))
-	s.mux.HandleFunc("PUT /api/union/admin/blacklist/invalidate/{id}", s.withAdminAPIKey(s.handleBlacklistInvalidate))
-	s.mux.HandleFunc("DELETE /api/union/admin/blacklist/{id}", s.withAdminAPIKey(s.handleBlacklistDelete))
+	s.mux.HandleFunc(s.route("GET /api/union/admin/blacklist"), s.withAdminAPIKey(s.handleBlacklistList))
+	s.mux.HandleFunc(s.route("POST /api/union/admin/blacklist"), s.withAdminAPIKey(s.handleBlacklistCreate))
+	s.mux.HandleFunc(s.route("PUT /api/union/admin/blacklist/invalidate/{id}"), s.withAdminAPIKey(s.handleBlacklistInvalidate))
+	s.mux.HandleFunc(s.route("DELETE /api/union/admin/blacklist/{id}"), s.withAdminAPIKey(s.handleBlacklistDelete))
 
-	s.mux.HandleFunc("POST /api/union/profile/bind", s.withBearerToken(s.handleProfileBind))
-	s.mux.HandleFunc("POST /api/union/profile/unbind", s.withBearerToken(s.handleProfileUnbind))
-	s.mux.HandleFunc("POST /api/union/profile/bindto", s.withBearerToken(s.handleProfileBindTo))
-	s.mux.HandleFunc("GET /api/union/security/level", s.withBearerToken(s.handleSecurityLevel))
+	s.mux.HandleFunc(s.route("POST /api/union/profile/bind"), s.withBearerToken(s.handleProfileBind))
+	s.mux.HandleFunc(s.route("POST /api/union/profile/unbind"), s.withBearerToken(s.handleProfileUnbind))
+	s.mux.HandleFunc(s.route("POST /api/union/profile/bindto"), s.withBearerToken(s.handleProfileBindTo))
+	s.mux.HandleFunc(s.route("GET /api/union/security/level"), s.withBearerToken(s.handleSecurityLevel))
 
-	s.mux.HandleFunc("POST /api/union/webhook/profile-sync", s.withWebhookSecret(s.handleProfileSyncWebhook))
+	s.mux.HandleFunc(s.route("POST /api/union/webhook/profile-sync"), s.withWebhookSecret(s.handleProfileSyncWebhook))
 
-	s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
+	s.mux.HandleFunc(root, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != root {
 			http.NotFound(w, r)
 			return
 		}
