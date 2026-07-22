@@ -49,17 +49,30 @@ func TestHealthEndpointReturnsStatusOk(t *testing.T) {
 	}
 }
 
-// TestListProfilesEndpointWorksWithoutOAuthToken verifies that /api/profiles
-// does not require an OAuth token — it queries the Union Hub directly.
-func TestListProfilesEndpointWorksWithoutOAuthToken(t *testing.T) {
-	// Start a fake Union Hub that returns profiles.
+// TestListProfilesEndpointWorksWithBearerToken verifies that /api/profiles
+// works with a valid Bearer token and returns profiles from the Union Hub.
+func TestListProfilesEndpointWorksWithBearerToken(t *testing.T) {
+	elementskin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1/users/me":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"id":           "user-123",
+				"display_name": "Steve",
+			})
+		default:
+			t.Errorf("unexpected elementskin path %s", r.URL.Path)
+		}
+	}))
+	defer elementskin.Close()
+
 	hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`[{"uuid":"u1","name":"Steve"}]`))
 	}))
 	defer hub.Close()
 
-	cfg := testConfig("http://127.0.0.1:1")
+	cfg := testConfig(elementskin.URL)
 	cfg.Storage.Path = filepath.Join(t.TempDir(), "store.db")
 	cfg.Union.HubURL = hub.URL
 	cfg.Union.MemberKey = "test-key"
@@ -73,8 +86,13 @@ func TestListProfilesEndpointWorksWithoutOAuthToken(t *testing.T) {
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
 
-	// No OAuth token seeded — the endpoint should still work.
-	resp, err := http.Get(ts.URL + "/api/profiles?username=Steve")
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/profiles?username=Steve", nil)
+	if err != nil {
+		t.Fatalf("get /api/profiles: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer valid-token")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("get /api/profiles: %v", err)
 	}
@@ -89,7 +107,21 @@ func TestListProfilesEndpointWorksWithoutOAuthToken(t *testing.T) {
 // TestListProfilesEndpointReturns503WhenUnionNotConfigured verifies that
 // /api/profiles returns 503 when the Union Hub URL and member key are not set.
 func TestListProfilesEndpointReturns503WhenUnionNotConfigured(t *testing.T) {
-	cfg := testConfig("http://127.0.0.1:1")
+	elementskin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1/users/me":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"id":           "user-123",
+				"display_name": "Steve",
+			})
+		default:
+			t.Errorf("unexpected elementskin path %s", r.URL.Path)
+		}
+	}))
+	defer elementskin.Close()
+
+	cfg := testConfig(elementskin.URL)
 	cfg.Storage.Path = filepath.Join(t.TempDir(), "store.db")
 	// Union.HubURL and Union.MemberKey remain empty — not configured.
 
@@ -102,7 +134,13 @@ func TestListProfilesEndpointReturns503WhenUnionNotConfigured(t *testing.T) {
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL + "/api/profiles?username=Steve")
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/profiles?username=Steve", nil)
+	if err != nil {
+		t.Fatalf("get /api/profiles: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer valid-token")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("get /api/profiles: %v", err)
 	}

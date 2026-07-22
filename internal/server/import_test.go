@@ -12,6 +12,20 @@ import (
 )
 
 func TestListProfilesEndpointReturnsUnionProfiles(t *testing.T) {
+	elementskin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1/users/me":
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"id":           "user-123",
+				"display_name": "Steve",
+			})
+		default:
+			t.Errorf("unexpected elementskin path %s", r.URL.Path)
+		}
+	}))
+	defer elementskin.Close()
+
 	hub := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/profile/unmapped/byname/Steve" {
 			t.Errorf("unexpected hub path %s", r.URL.Path)
@@ -23,7 +37,7 @@ func TestListProfilesEndpointReturnsUnionProfiles(t *testing.T) {
 	}))
 	defer hub.Close()
 
-	cfg := testConfig("http://127.0.0.1:1")
+	cfg := testConfig(elementskin.URL)
 	cfg.Storage.Path = filepath.Join(t.TempDir(), "store.db")
 	cfg.Union.HubURL = hub.URL
 	cfg.Union.MemberKey = "member-key"
@@ -37,7 +51,13 @@ func TestListProfilesEndpointReturnsUnionProfiles(t *testing.T) {
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL + "/api/profiles?username=Steve")
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/profiles?username=Steve", nil)
+	if err != nil {
+		t.Fatalf("get profiles: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer valid-token")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("get profiles: %v", err)
 	}
@@ -62,7 +82,19 @@ func TestListProfilesEndpointReturnsUnionProfiles(t *testing.T) {
 }
 
 func TestListProfilesEndpointRejectsMissingUsername(t *testing.T) {
-	cfg := testConfig("http://127.0.0.1:1")
+	elementskin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/users/me" {
+			t.Errorf("unexpected elementskin path %s", r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"id":           "user-123",
+			"display_name": "TestUser",
+		})
+	}))
+	defer elementskin.Close()
+
+	cfg := testConfig(elementskin.URL)
 	cfg.Storage.Path = filepath.Join(t.TempDir(), "store.db")
 
 	srv, err := New(cfg, testLogger())
@@ -74,7 +106,13 @@ func TestListProfilesEndpointRejectsMissingUsername(t *testing.T) {
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL + "/api/profiles")
+	req, err := http.NewRequest(http.MethodGet, ts.URL+"/api/profiles", nil)
+	if err != nil {
+		t.Fatalf("get profiles: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer valid-token")
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatalf("get profiles: %v", err)
 	}

@@ -136,15 +136,7 @@ func (s *Server) handleSecurityLevel(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]int{"level": level})
 }
 
-// registerProfileUnionRoutes wires the bearer-authenticated Union profile
-// endpoints into the server's mux. It is separated from routes() so that
-// these handlers can be added when the surrounding server wiring is ready.
-func (s *Server) registerProfileUnionRoutes() {
-	s.mux.HandleFunc("POST /api/union/profile/bind", s.withBearerToken(s.handleProfileBind))
-	s.mux.HandleFunc("POST /api/union/profile/unbind", s.withBearerToken(s.handleProfileUnbind))
-	s.mux.HandleFunc("POST /api/union/profile/bindto", s.withBearerToken(s.handleProfileBindTo))
-	s.mux.HandleFunc("GET /api/union/security/level", s.withBearerToken(s.handleSecurityLevel))
-}
+
 
 func decodeUUID(r *http.Request) (string, bool) {
 	var req struct {
