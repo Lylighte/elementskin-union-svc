@@ -136,8 +136,6 @@ func (s *Server) handleSecurityLevel(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]int{"level": level})
 }
 
-
-
 func decodeUUID(r *http.Request) (string, bool) {
 	var req struct {
 		UUID string `json:"uuid"`
