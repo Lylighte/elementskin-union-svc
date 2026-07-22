@@ -274,18 +274,26 @@ func TestE2EProfileBindWithUserToken(t *testing.T) {
 	defer hub.Close()
 
 	elementskin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/v1/users/me" {
-			t.Errorf("elementskin path = %q, want /v1/users/me", r.URL.Path)
+		switch r.URL.Path {
+		case "/v1/users/me":
+			if !strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ") {
+				t.Errorf("missing bearer authorization: %q", r.Header.Get("Authorization"))
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(bridge.UserInfo{
+				ID:          "user-456",
+				DisplayName: "Alice",
+				Email:       "alice@example.com",
+			})
+		case "/v1/users/me/profiles":
+			if !strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ") {
+				t.Errorf("missing bearer authorization on profiles: %q", r.Header.Get("Authorization"))
+			}
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"items":[{"id":"profile-uuid-abc"}]}`))
+		default:
+			t.Errorf("unexpected elementskin path %s", r.URL.Path)
 		}
-		if !strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ") {
-			t.Errorf("missing bearer authorization: %q", r.Header.Get("Authorization"))
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(bridge.UserInfo{
-			ID:          "user-456",
-			DisplayName: "Alice",
-			Email:       "alice@example.com",
-		})
 	}))
 	defer elementskin.Close()
 

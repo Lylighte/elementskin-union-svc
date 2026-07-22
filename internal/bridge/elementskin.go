@@ -184,6 +184,59 @@ func (c *ElementSkinClient) GetUserInfo(ctx context.Context, bearerToken string)
 	return &ui, nil
 }
 
+// ListUserProfiles returns the profile IDs owned by the authenticated user
+// via GET /v1/users/me/profiles. Requires the profile.read.owned scope.
+func (c *ElementSkinClient) ListUserProfiles(ctx context.Context, token string) ([]string, error) {
+	u, err := url.Parse(c.baseURL + "/v1/users/me/profiles")
+	if err != nil {
+		return nil, fmt.Errorf("build user profiles URL: %w", err)
+	}
+	q := u.Query()
+	q.Set("limit", "100")
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("build user profiles request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("execute user profiles request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("read user profiles response: %w", err)
+	}
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		detail := extractDetail(respBody)
+		if detail == "" {
+			detail = string(respBody)
+		}
+		return nil, &APIError{Status: resp.StatusCode, Detail: detail}
+	}
+
+	var page struct {
+		Items []struct {
+			ID string `json:"id"`
+		} `json:"items"`
+	}
+	if err := json.Unmarshal(respBody, &page); err != nil {
+		return nil, fmt.Errorf("decode user profiles response: %w", err)
+	}
+
+	ids := make([]string, 0, len(page.Items))
+	for _, item := range page.Items {
+		ids = append(ids, item.ID)
+	}
+	return ids, nil
+}
+
 // SearchProfilesByName queries the admin profiles API and returns only
 // profiles whose Name exactly matches name.
 func (c *ElementSkinClient) SearchProfilesByName(ctx context.Context, token, name string) ([]AdminProfile, error) {

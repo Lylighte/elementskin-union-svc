@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	oauth2AuthorizeScope = "account.read.self"
+	oauth2AuthorizeScope = "account.read.self profile.read.owned"
 	userInfoTokenTTL     = 600 * time.Second
 )
 

@@ -14,7 +14,7 @@ import (
 const (
 	// defaultScope is the scope requested when the authorize endpoint is called
 	// without an explicit scope parameter.
-	defaultScope = "account.read.self"
+	defaultScope = "account.read.self profile.read.owned"
 
 	sessionTTL = 1 * time.Hour
 )

@@ -172,8 +172,8 @@ func TestOAuth2GrantWithoutSessionRedirectsToAuthorize(t *testing.T) {
 		t.Errorf("location host = %q, want %q", loc.Scheme+"://"+loc.Host, elementskin.URL)
 	}
 	q := loc.Query()
-	if q.Get("scope") != "account.read.self" {
-		t.Errorf("scope = %q, want account.read.self", q.Get("scope"))
+	if q.Get("scope") != "account.read.self profile.read.owned" {
+		t.Errorf("scope = %q, want account.read.self profile.read.owned", q.Get("scope"))
 	}
 	if q.Get("redirect_uri") != cfg.Elementskin.OAuth.RedirectURI {
 		t.Errorf("redirect_uri = %q, want %q", q.Get("redirect_uri"), cfg.Elementskin.OAuth.RedirectURI)

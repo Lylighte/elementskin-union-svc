@@ -74,7 +74,13 @@ func assertJSONField(t *testing.T, rr *httptest.ResponseRecorder, key string, wa
 
 func validElementSkinHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		_ = json.NewEncoder(w).Encode(bridge.UserInfo{DisplayName: "alice"})
+		switch r.URL.Path {
+		case "/v1/users/me":
+			_ = json.NewEncoder(w).Encode(bridge.UserInfo{DisplayName: "alice"})
+		case "/v1/users/me/profiles":
+			// Return profiles corresponding to UUIDs that ownership-validation tests use.
+			_, _ = w.Write([]byte(`{"items":[{"id":"profile-uuid"},{"id":"unbind-uuid"},{"id":"bindto-uuid"},{"id":"u1"}]}`))
+		}
 	}
 }
 

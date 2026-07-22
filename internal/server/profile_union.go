@@ -12,13 +12,19 @@ import (
 
 type ctxKey int
 
-const userInfoKey ctxKey = 0
+const (
+	userInfoKey    ctxKey = 0
+	accessTokenKey ctxKey = 1
+)
 
-// UserInfoFromContext returns the authenticated Element-Skin user stored by
-// withBearerToken. The second result reports whether a user was present.
 func UserInfoFromContext(ctx context.Context) (*bridge.UserInfo, bool) {
 	ui, ok := ctx.Value(userInfoKey).(*bridge.UserInfo)
 	return ui, ok
+}
+
+func accessTokenFromContext(ctx context.Context) string {
+	v, _ := ctx.Value(accessTokenKey).(string)
+	return v
 }
 
 // withBearerToken validates the Authorization: Bearer header against
@@ -51,8 +57,36 @@ func (s *Server) withBearerToken(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		ctx := context.WithValue(r.Context(), userInfoKey, userInfo)
+		ctx = context.WithValue(ctx, accessTokenKey, token)
 		next(w, r.WithContext(ctx))
 	}
+}
+
+func (s *Server) validateProfileOwnership(w http.ResponseWriter, r *http.Request, uuid string) bool {
+	token := accessTokenFromContext(r.Context())
+	client := bridge.NewElementSkinClient(s.cfg.Elementskin.BaseURL, s.httpClient)
+	ids, err := client.ListUserProfiles(r.Context(), token)
+	if err != nil {
+		var apiErr *bridge.APIError
+		if errors.As(err, &apiErr) {
+			if apiErr.Status == http.StatusUnauthorized || apiErr.Status == http.StatusForbidden {
+				writeJSONError(w, http.StatusUnauthorized, "unauthorized")
+				return false
+			}
+		}
+		s.logger.Error("failed to list user profiles for ownership check", "error", err)
+		writeJSONError(w, http.StatusInternalServerError, "failed to validate profile ownership")
+		return false
+	}
+
+	for _, id := range ids {
+		if id == uuid {
+			return true
+		}
+	}
+
+	writeJSONError(w, http.StatusForbidden, "profile not owned by current user")
+	return false
 }
 
 // handleProfileBind proxies a bearer-authenticated bind request to the Union
@@ -61,6 +95,10 @@ func (s *Server) handleProfileBind(w http.ResponseWriter, r *http.Request) {
 	uuid, ok := decodeUUID(r)
 	if !ok {
 		writeJSONError(w, http.StatusBadRequest, "uuid is required")
+		return
+	}
+
+	if !s.validateProfileOwnership(w, r, uuid) {
 		return
 	}
 
@@ -78,6 +116,10 @@ func (s *Server) handleProfileUnbind(w http.ResponseWriter, r *http.Request) {
 	uuid, ok := decodeUUID(r)
 	if !ok {
 		writeJSONError(w, http.StatusBadRequest, "uuid is required")
+		return
+	}
+
+	if !s.validateProfileOwnership(w, r, uuid) {
 		return
 	}
 
@@ -106,6 +148,10 @@ func (s *Server) handleProfileBindTo(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Token == "" {
 		writeJSONError(w, http.StatusBadRequest, "token is required")
+		return
+	}
+
+	if !s.validateProfileOwnership(w, r, req.UUID) {
 		return
 	}
 
