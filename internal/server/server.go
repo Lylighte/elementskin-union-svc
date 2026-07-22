@@ -37,6 +37,7 @@ type Server struct {
 	httpClient    *http.Client
 	logger        *slog.Logger
 	mux           *http.ServeMux
+	rateLimiter   *rateLimiter
 }
 
 // New creates a Server from configuration, opening the token and state stores.
@@ -89,6 +90,7 @@ func New(cfg config.Config, logger *slog.Logger) (*Server, error) {
 		httpClient:    httpClient,
 		logger:        logger,
 		mux:           http.NewServeMux(),
+		rateLimiter:   newRateLimiter(rateLimitCount, rateLimitWindow),
 	}
 	s.routes()
 	return s, nil
@@ -118,10 +120,10 @@ func (s *Server) routes() {
 	s.mux.HandleFunc(s.route("GET /api/union/member/oauth2/"), s.handleOAuth2GetSigPublicKey)
 	s.mux.HandleFunc(s.route("GET /api/union/member/oauth2/grant"), s.handleOAuth2Grant)
 
-	s.mux.HandleFunc(s.route("GET /api/union/admin/blacklist"), s.withAdminAPIKey(s.handleBlacklistList))
-	s.mux.HandleFunc(s.route("POST /api/union/admin/blacklist"), s.withAdminAPIKey(s.handleBlacklistCreate))
-	s.mux.HandleFunc(s.route("PUT /api/union/admin/blacklist/invalidate/{id}"), s.withAdminAPIKey(s.handleBlacklistInvalidate))
-	s.mux.HandleFunc(s.route("DELETE /api/union/admin/blacklist/{id}"), s.withAdminAPIKey(s.handleBlacklistDelete))
+	s.mux.HandleFunc(s.route("GET /api/union/admin/blacklist"), s.withRateLimit(s.withAdminAPIKey(s.handleBlacklistList)))
+	s.mux.HandleFunc(s.route("POST /api/union/admin/blacklist"), s.withRateLimit(s.withAdminAPIKey(s.handleBlacklistCreate)))
+	s.mux.HandleFunc(s.route("PUT /api/union/admin/blacklist/invalidate/{id}"), s.withRateLimit(s.withAdminAPIKey(s.handleBlacklistInvalidate)))
+	s.mux.HandleFunc(s.route("DELETE /api/union/admin/blacklist/{id}"), s.withRateLimit(s.withAdminAPIKey(s.handleBlacklistDelete)))
 
 	s.mux.HandleFunc(s.route("POST /api/union/profile/bind"), s.withBearerToken(s.handleProfileBind))
 	s.mux.HandleFunc(s.route("POST /api/union/profile/unbind"), s.withBearerToken(s.handleProfileUnbind))
