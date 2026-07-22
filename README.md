@@ -98,7 +98,7 @@ go build ./cmd/union-svc
 ### 6. Webhook 同步
 
 接收来自 skin-backend 的 Webhook 回调，触发角色变化同步到 Union Hub。
-支持的操作：添加（`add`）、更新（`update`）、删除（`delete`）、全量同步（`full_sync`）。
+支持的操作：添加（`add`）、更新（`update`）、删除（`delete`）、全量同步（`full_sync`）。空字符串 `action` 等同于 `full_sync`。
 认证方式为 `Authorization: Bearer {webhook_secret}`。
 
 ## API 端点
@@ -123,7 +123,7 @@ go build ./cmd/union-svc
 | `GET` | `/api/union/member/queryemail` | 按角色名查邮箱 |
 | `POST` | `/api/union/member/diagnose` | Hub 诊断握手 |
 
-### Union OAuth2（公开，受 `enable_oauth2` 开关控制）
+### Union OAuth2（受 `enable_oauth2` 开关控制。grant 端点需要 session cookie，无 session 时重定向到 OAuth 授权页面）
 
 | 方法 | 路径 | 说明 |
 |---|---|---|
@@ -147,6 +147,7 @@ go build ./cmd/union-svc
 | `POST` | `/api/union/profile/unbind` | 解绑角色 |
 | `POST` | `/api/union/profile/bindto` | 绑定到其他成员 |
 | `GET` | `/api/union/security/level` | 查询安全等级 |
+| `GET` | `/api/profiles` | 查询 Union 角色列表（?username= 过滤，调用 Element-Skin 的 ListAllProfiles） |
 
 ### Webhook（`Authorization: Bearer {webhook_secret}`）
 

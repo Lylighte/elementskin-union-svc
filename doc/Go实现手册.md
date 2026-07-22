@@ -1,7 +1,7 @@
 # union-svc Go 实现手册
 
 > 基于 Element-Skin 的 Go sidecar 实现，对应 PHP 插件 `yggdrasil-connect` 的成员站功能。
-> 版本：v1.1 | 最后更新：2026-07-07
+> 版本：v1.1 | 最后更新：2026-07-22
 
 ---
 
@@ -54,7 +54,11 @@ union-svc 是 Element-Skin 的独立 sidecar 服务，实现 Union 联邦协议�
 | `POST /union/profile/bind` 等 | `POST /api/union/profile/*` | 用户认证改为 Bearer Token |
 | Illuminate Event `ProfileUpdated` 等 | `POST /api/union/webhook/profile-sync` | 事件钩子 → Webhook |
 | `GET /union` (用户面板) | 未实现 | 前端页面推迟到后续 fork |
+| `POST /api/union/member/updateplugin` | 未实现 | 已从元素端删除 |
 | `POST /api/union/member/remapuuid` | 未实现 | 已弃用 |
+| `GET /api/profiles` | `GET /api/profiles`（Go 直接处理） | Go 直接处理，调用 Element-Skin 的 ListAllProfiles |
+
+> **CORS 端点范围**：仅 `/api/union/member/`（hello）和 `/api/union/member/oauth2/*`（OAuth2 端点）受 `CORSAllowOrigin` 配置影响。sync、webhook、admin、profile 端点均为内部通信，不设置 CORS。
 
 ### 2.3 OAuth2 加密实现
 
@@ -110,6 +114,8 @@ union-svc/
 | `withWebhookSecret` | `/api/union/webhook/*` | `Bearer {webhook_secret}` | Webhook 回调 |
 
 所有密钥对比均使用 `crypto/subtle.ConstantTimeCompare`，防时序攻击。
+
+> **CORS 配置范围**：`CORSAllowOrigin` 仅对 `/api/union/member/`（hello）和 `/api/union/member/oauth2/*`（OAuth2 端点）设置 CORS 头。sync、webhook、admin、profile 等端点不设置 CORS。
 
 ---
 
