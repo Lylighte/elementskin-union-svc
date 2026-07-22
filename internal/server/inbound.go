@@ -140,7 +140,10 @@ func (s *Server) handleUpdateBackendKey(w http.ResponseWriter, r *http.Request) 
 
 // handleSync triggers a profile synchronization with the Union Hub. The Hub
 // may supply a profileList hint in the request body, but it is ignored: the
-// member reports its actual local profiles queried via the admin API.
+// member reports its actual local profiles from the Element-Skin admin API.
+// Admin-level access is required because the Hub expects the authoritative
+// set of all local profiles, not just those visible to a single user. The
+// service account provides the necessary credentials for this call.
 func (s *Server) handleSync(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -167,6 +170,7 @@ func (s *Server) handleSync(w http.ResponseWriter, r *http.Request) {
 	for _, p := range profiles {
 		profileList[p.Name] = p.ID
 	}
+	s.logger.Info("initiated profile sync with hub", "profile_count", len(profileList))
 
 	if err := s.unionClient.SyncProfiles(ctx, profileList); err != nil {
 		if hubErr := passThroughHubError(err); hubErr != nil {

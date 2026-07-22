@@ -125,6 +125,14 @@ func (s *Server) routes() {
 	s.mux.HandleFunc(s.route("PUT /api/union/admin/blacklist/invalidate/{id}"), s.withRateLimit(s.withAdminAPIKey(s.handleBlacklistInvalidate)))
 	s.mux.HandleFunc(s.route("DELETE /api/union/admin/blacklist/{id}"), s.withRateLimit(s.withAdminAPIKey(s.handleBlacklistDelete)))
 
+	s.mux.HandleFunc(s.route("POST /api/union/admin/sync"), s.withRateLimit(s.withAdminAPIKey(s.handleAdminSync)))
+	s.mux.HandleFunc(s.route("POST /api/union/admin/update-list"), s.withRateLimit(s.withAdminAPIKey(s.handleAdminUpdateList)))
+	s.mux.HandleFunc(s.route("POST /api/union/admin/update-key"), s.withRateLimit(s.withAdminAPIKey(s.handleAdminUpdateKey)))
+	s.mux.HandleFunc(s.route("POST /api/union/admin/diagnose"), s.withRateLimit(s.withAdminAPIKey(s.handleAdminDiagnose)))
+	s.mux.HandleFunc(s.route("GET /api/union/admin/status"), s.withRateLimit(s.withAdminAPIKey(s.handleAdminStatus)))
+	s.mux.HandleFunc(s.route("GET /api/union/admin/keypair-fingerprint"), s.withRateLimit(s.withAdminAPIKey(s.handleAdminKeypairFingerprint)))
+	s.mux.HandleFunc(s.route("POST /api/union/admin/regenerate-keypair"), s.withRateLimit(s.withAdminAPIKey(s.handleAdminRegenerateKeypair)))
+
 	s.mux.HandleFunc(s.route("POST /api/union/profile/bind"), s.withBearerToken(s.handleProfileBind))
 	s.mux.HandleFunc(s.route("POST /api/union/profile/unbind"), s.withBearerToken(s.handleProfileUnbind))
 	s.mux.HandleFunc(s.route("POST /api/union/profile/bindto"), s.withBearerToken(s.handleProfileBindTo))
