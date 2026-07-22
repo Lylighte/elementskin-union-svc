@@ -1,0 +1,44 @@
+# union-svc example configuration.
+# Copy to config.yaml and adjust for your environment.
+# All fields shown as empty ("") are REQUIRED and must be provided.
+
+server:
+  addr: ""
+  port: 8001
+
+elementskin:
+  base_url: ""
+  site_url: ""
+  oauth:
+    client_id: ""
+    client_secret: ""
+    redirect_uri: ""
+  service_account:
+    client_id: ""
+    client_secret: ""
+    scope: "profile.read.any"
+
+storage:
+  path: "./union-svc.db"
+
+union:
+  hub_url: ""
+  member_key: ""
+  cors_allow_origin: ""
+  timeout_seconds: 30
+  # Admin API key used to authenticate internal/administrative endpoints.
+  admin_api_key: ""
+  # Webhook secret used to verify signatures on incoming webhooks.
+  webhook_secret: ""
+  # Enable OAuth2 token issuance and verification for Union peers.
+  enable_oauth2: true
+  # Paths to the OAuth2 signing key pair. Files are created automatically if absent.
+  oauth2_sig_private_key_path: "./oauth2_sig_private.pem"
+  oauth2_sig_public_key_path: "./oauth2_sig_public.pem"
+
+tls:
+  insecure_skip_verify: false
+  ca_file: ""
+
+log:
+  level: "info"

@@ -1,0 +1,9 @@
+services:
+  union-svc:
+    image: union-svc:latest
+    restart: always
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+      - ./data:/app/data

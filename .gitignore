@@ -1,0 +1,24 @@
+# Build artifacts
+/union-svc
+*.exe
+*.exe~
+
+# Local SQLite storage
+*.db
+*.db-shm
+*.db-wal
+
+# Auto-generated keys
+*.pem
+
+# Docker data directory
+data/
+
+# Local config (do not commit credentials)
+config.yaml
+
+# Test coverage
+coverage.out
+cover*.out
+
+*.cookie

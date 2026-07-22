@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Union 角色查询</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif; background: #f5f5f5; color: #333; line-height: 1.6; }
+.container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
+h1 { text-align: center; margin-bottom: 2rem; color: #1a1a1a; }
+.card { background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,.1); padding: 1.5rem; margin-bottom: 1.5rem; }
+.card h2 { font-size: 1.1rem; margin-bottom: 1rem; color: #1a1a1a; }
+.step-badge { display: inline-block; background: #409eff; color: #fff; border-radius: 50%; width: 24px; height: 24px; text-align: center; line-height: 24px; font-size: .85rem; margin-right: .5rem; }
+input[type="text"] { width: 100%; padding: .6rem .8rem; border: 1px solid #dcdfe6; border-radius: 4px; font-size: .95rem; outline: none; transition: border-color .2s; }
+input[type="text"]:focus { border-color: #409eff; }
+button, .btn-link { display: inline-block; padding: .6rem 1.2rem; border: none; border-radius: 4px; font-size: .95rem; cursor: pointer; transition: opacity .2s; text-decoration: none; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.btn-primary { background: #409eff; color: #fff; }
+.btn-primary:hover:not(:disabled) { opacity: .8; }
+.btn-link { background: #409eff; color: #fff; text-align: center; }
+.btn-link:hover { opacity: .8; }
+.actions { margin-top: 1rem; }
+.profile-list { list-style: none; margin-top: .75rem; }
+.profile-list li { padding: .5rem .75rem; border: 1px solid #ebeef5; border-radius: 4px; margin-bottom: .5rem; cursor: pointer; transition: background .15s; }
+.profile-list li:hover { background: #f5f7fa; }
+.msg-info { padding: .75rem 1rem; border-radius: 4px; margin-top: .75rem; }
+.msg-success { background: #f0f9eb; border: 1px solid #e1f3d8; color: #67c23a; }
+.msg-error { background: #fef0f0; border: 1px solid #fde2e2; color: #f56c6c; }
+.msg-empty { background: #fafafa; border: 1px solid #ebeef5; color: #909399; }
+.msg-authorized { background: #f0f9eb; border: 1px solid #e1f3d8; color: #67c23a; text-align: center; padding: .75rem; border-radius: 4px; margin-bottom: 1.5rem; }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Union 角色查询</h1>
+
+  <div id="authorized-msg" class="hidden msg-authorized">授权完成，现在可以查询角色。</div>
+
+  <div class="card">
+    <h2><span class="step-badge">1</span> 授权</h2>
+    <p style="margin-bottom:1rem;color:#666;">需要先授权 union-svc 访问你的 Element-Skin 账户。</p>
+    <a class="btn-link" href="/oauth/authorize">授权</a>
+  </div>
+
+  <div class="card">
+    <h2><span class="step-badge">2</span> 查询角色</h2>
+    <div style="display:flex;gap:.5rem;">
+      <input type="text" id="username-input" placeholder="输入 Union 用户名">
+      <button id="query-btn" class="btn-primary" disabled>查询</button>
+    </div>
+    <div id="query-status" class="hidden" style="margin-top:.75rem;"></div>
+    <ul id="profile-list" class="profile-list hidden"></ul>
+  </div>
+
+  </div>
+
+<script>
+(function() {
+  const usernameInput = document.getElementById('username-input');
+  const queryBtn = document.getElementById('query-btn');
+  const queryStatus = document.getElementById('query-status');
+  const profileList = document.getElementById('profile-list');
+
+  let profiles = [];
+
+  // Show authorized message if ?authorized=true
+  if (new URLSearchParams(location.search).get('authorized') === 'true') {
+    document.getElementById('authorized-msg').classList.remove('hidden');
+  }
+
+  // Enable query button only when input is non-empty
+  usernameInput.addEventListener('input', function() {
+    queryBtn.disabled = this.value.trim() === '';
+  });
+
+  // Query profiles
+  queryBtn.addEventListener('click', function() {
+    const username = usernameInput.value.trim();
+    if (!username) return;
+
+    queryBtn.disabled = true;
+    queryBtn.textContent = '加载中...';
+    showQueryStatus('info', '正在查询...');
+    profileList.classList.add('hidden');
+
+    fetch('/api/profiles?username=' + encodeURIComponent(username))
+      .then(function(r) {
+        if (!r.ok) return r.json().then(function(e) { throw new Error(e.detail || '查询失败'); });
+        return r.json();
+      })
+      .then(function(data) {
+        profiles = data.items || [];
+        if (profiles.length === 0) {
+          showQueryStatus('empty', '未找到角色');
+          return;
+        }
+        queryStatus.classList.add('hidden');
+        renderProfiles(profiles);
+      })
+      .catch(function(err) {
+        showQueryStatus('error', err.message || '查询失败，请稍后重试');
+      })
+      .finally(function() {
+        queryBtn.disabled = false;
+        queryBtn.textContent = '查询';
+      });
+  });
+
+  function renderProfiles(items) {
+    profileList.innerHTML = '';
+    items.forEach(function(p) {
+      var li = document.createElement('li');
+      li.textContent = p.name + ' (' + p.uuid + ')';
+      profileList.appendChild(li);
+    });
+    profileList.classList.remove('hidden');
+  }
+
+  function showQueryStatus(type, msg) {
+    queryStatus.className = '';
+    queryStatus.classList.remove('hidden');
+    var cls = 'msg-';
+    if (type === 'error') cls += 'error';
+    else if (type === 'empty') cls += 'empty';
+    else cls += 'info';
+    queryStatus.className = 'msg-info ' + cls;
+    queryStatus.textContent = msg;
+  }
+})();
+</script>
+</body>
+</html>
