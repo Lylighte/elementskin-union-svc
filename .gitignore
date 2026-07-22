@@ -22,3 +22,19 @@ coverage.out
 cover*.out
 
 *.cookie
+
+# IDE / editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+
+# Go workspace
+.gocache/
+.gomodcache/
+
+# Omo planning state (not project code)
+.omo/
