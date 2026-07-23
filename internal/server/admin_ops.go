@@ -46,7 +46,7 @@ func (s *Server) handleAdminUpdateList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = s.settingsStore().Set(ctx, "serverlist_version", strconv.Itoa(version))
+	_ = s.settingsStore().Set(ctx, "server_list_version", strconv.Itoa(version))
 	s.logger.Info("admin update-list", "version", version, "ip", clientIP(r))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -62,7 +62,7 @@ func (s *Server) handleAdminUpdateKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = s.settingsStore().Set(ctx, "privatekey_version", strconv.Itoa(version))
+	_ = s.settingsStore().Set(ctx, "private_key_version", strconv.Itoa(version))
 	s.logger.Info("admin update-key", "version", version, "ip", clientIP(r))
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -96,7 +96,7 @@ func (s *Server) handleAdminStatus(w http.ResponseWriter, r *http.Request) {
 
 	serverlistVersion := 0
 	if settings != nil {
-		if v, err := settings.Get(ctx, "serverlist_version"); err == nil {
+		if v, err := settings.Get(ctx, "server_list_version"); err == nil {
 			if n, err := strconv.Atoi(v); err == nil {
 				serverlistVersion = n
 			}
@@ -105,7 +105,7 @@ func (s *Server) handleAdminStatus(w http.ResponseWriter, r *http.Request) {
 
 	privatekeyVersion := 0
 	if settings != nil {
-		if v, err := settings.Get(ctx, "privatekey_version"); err == nil {
+		if v, err := settings.Get(ctx, "private_key_version"); err == nil {
 			if n, err := strconv.Atoi(v); err == nil {
 				privatekeyVersion = n
 			}
