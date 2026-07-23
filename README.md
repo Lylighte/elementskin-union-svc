@@ -32,7 +32,7 @@ go build ./cmd/union-svc
 |---|---|
 | `UNION_ELEMENTSKIN_BASE_URL` | Element-Skin API 地址 |
 | `UNION_ELEMENTSKIN_SITE_URL` | Element-Skin 前端地址，用于 OAuth 授权页面跳转 |
-| `UNION_ELEMENTSKIN_OAUTH_CLIENT_ID` | OAuth 客户端 ID（需在 Element-Skin 创建 Confidential 应用，申请 `account.read.self` 权限） |
+| `UNION_ELEMENTSKIN_OAUTH_CLIENT_ID` | OAuth 客户端 ID（需在 Element-Skin 创建 Confidential 应用，申请 `account.read.self` 和 `profile.read.owned` 权限） |
 | `UNION_ELEMENTSKIN_OAUTH_CLIENT_SECRET` | OAuth 客户端密钥 |
 | `UNION_ELEMENTSKIN_OAUTH_REDIRECT_URI` | OAuth 回调地址 |
 | `UNION_ELEMENTSKIN_SERVICE_ACCOUNT_CLIENT_ID` | 服务账号客户端 ID（需在 Element-Skin 创建 Confidential 应用，申请 `profile.read.any` 权限） |
