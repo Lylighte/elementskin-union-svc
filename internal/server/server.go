@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Lylighte/elementskin-union-svc/internal/bridge"
@@ -96,8 +97,15 @@ func New(cfg config.Config, logger *slog.Logger) (*Server, error) {
 	return s, nil
 }
 
-func (s *Server) route(path string) string {
-	return s.cfg.Server.RootPath + path
+func (s *Server) route(pattern string) string {
+	rp := s.cfg.Server.RootPath
+	if rp == "" {
+		return pattern
+	}
+	if idx := strings.Index(pattern, " "); idx != -1 {
+		return pattern[:idx+1] + rp + pattern[idx+1:]
+	}
+	return rp + pattern
 }
 
 func (s *Server) routes() {
