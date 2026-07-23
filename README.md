@@ -24,7 +24,7 @@ go build ./cmd/union-svc
 | 环境变量 | 默认值 | 说明 |
 |---|---|---|
 | `UNION_SERVER_ADDR` | - | 监听地址 |
-| `UNION_SERVER_PORT` | `8001` | 监听端口 |
+| `UNION_SERVER_PORT` | `8267` | 监听端口 |
 
 ### Element-Skin（全部必填）
 
