@@ -3,7 +3,7 @@ services:
     image: union-svc:latest
     restart: always
     ports:
-      - "8001:8001"
+      - "8267:8267"
     volumes:
       - ./config.yaml:/app/config.yaml:ro
       - ./data:/app/data

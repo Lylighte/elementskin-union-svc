@@ -10,6 +10,6 @@ RUN CGO_ENABLED=0 go build -trimpath -o union-svc ./cmd/union-svc
 FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app
 COPY --from=builder /build/union-svc .
-EXPOSE 8001
+EXPOSE 8267
 ENTRYPOINT ["./union-svc"]
 CMD ["--config", "/app/config.yaml"]
