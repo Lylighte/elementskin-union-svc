@@ -9,27 +9,40 @@ import (
 	"strings"
 )
 
-// withAdminAPIKey wraps a handler so it is only invoked when the request
-// carries an "Authorization: Bearer {token}" header that matches the
-// configured admin API key. The comparison uses crypto/subtle to avoid
-// timing side-channels.
-func (s *Server) withAdminAPIKey(fn http.HandlerFunc) http.HandlerFunc {
+// withAdminAuth wraps a handler with API key verification and rate limiting
+// that only counts failed authentication attempts. Authenticated requests are
+// not rate-limited, so legitimate admin operations never exceed the quota.
+func (s *Server) withAdminAuth(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		auth := r.Header.Get("Authorization")
 		const prefix = "Bearer "
 		if !strings.HasPrefix(auth, prefix) {
-			writeAdminUnauthorized(w)
+			s.consumeRateLimit(w, r)
 			return
 		}
 
 		token := auth[len(prefix):]
 		if subtle.ConstantTimeCompare([]byte(token), []byte(s.cfg.Union.AdminAPIKey)) != 1 {
-			writeAdminUnauthorized(w)
+			s.consumeRateLimit(w, r)
 			return
 		}
 
 		fn(w, r)
 	}
+}
+
+// consumeRateLimit checks and consumes the IP-based rate limit quota.
+// On exhaustion it writes a 429 response; the caller should return immediately.
+func (s *Server) consumeRateLimit(w http.ResponseWriter, r *http.Request) {
+	ip := clientIP(r)
+	if ok, _ := s.rateLimiter.allow(ip); !ok {
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Retry-After", "60")
+		w.WriteHeader(http.StatusTooManyRequests)
+		_ = json.NewEncoder(w).Encode(map[string]string{"detail": "rate limit exceeded"})
+		return
+	}
+	writeAdminUnauthorized(w)
 }
 
 func writeAdminUnauthorized(w http.ResponseWriter) {

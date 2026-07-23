@@ -32,10 +32,10 @@ func setupBlacklistAdminServer(t *testing.T, hubHandler http.HandlerFunc) *httpt
 	t.Cleanup(func() { _ = srv.Close() })
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /api/union/admin/blacklist", srv.withAdminAPIKey(srv.handleBlacklistList))
-	mux.HandleFunc("POST /api/union/admin/blacklist", srv.withAdminAPIKey(srv.handleBlacklistCreate))
-	mux.HandleFunc("PUT /api/union/admin/blacklist/invalidate/{id}", srv.withAdminAPIKey(srv.handleBlacklistInvalidate))
-	mux.HandleFunc("DELETE /api/union/admin/blacklist/{id}", srv.withAdminAPIKey(srv.handleBlacklistDelete))
+	mux.HandleFunc("GET /api/union/admin/blacklist", srv.withAdminAuth(srv.handleBlacklistList))
+	mux.HandleFunc("POST /api/union/admin/blacklist", srv.withAdminAuth(srv.handleBlacklistCreate))
+	mux.HandleFunc("PUT /api/union/admin/blacklist/invalidate/{id}", srv.withAdminAuth(srv.handleBlacklistInvalidate))
+	mux.HandleFunc("DELETE /api/union/admin/blacklist/{id}", srv.withAdminAuth(srv.handleBlacklistDelete))
 
 	ts := httptest.NewServer(mux)
 	t.Cleanup(ts.Close)
