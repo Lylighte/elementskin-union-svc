@@ -1,6 +1,6 @@
 services:
   union-svc:
-    image: union-svc:latest
+    image: ghcr.io/lylighte/elementskin-union-svc:latest
     restart: always
     ports:
       - "8267:8267"
