@@ -30,8 +30,8 @@ func TestDefaults(t *testing.T) {
 	if cfg.Server.Addr != "" {
 		t.Errorf("Server.Addr = %q, want empty", cfg.Server.Addr)
 	}
-	if cfg.Server.Port != 8001 {
-		t.Errorf("Server.Port = %d, want 8001", cfg.Server.Port)
+	if cfg.Server.Port != 8267 {
+		t.Errorf("Server.Port = %d, want 8267", cfg.Server.Port)
 	}
 	if cfg.Elementskin.BaseURL != "https://skin.example.com" {
 		t.Errorf("Elementskin.BaseURL = %q, want https://skin.example.com", cfg.Elementskin.BaseURL)
@@ -267,7 +267,7 @@ func TestLoadFullyPopulatedYAMLPassesValidation(t *testing.T) {
 	yamlContent := `
 server:
   addr: "0.0.0.0"
-  port: 8001
+  port: 8267
 elementskin:
   base_url: "https://skin.example.com"
   oauth:
@@ -337,7 +337,7 @@ tls:
 func TestNewUnionConfig(t *testing.T) {
 	baseYAML := `
 server:
-  port: 8001
+  port: 8267
 elementskin:
   base_url: "https://skin.example.com"
   oauth:
@@ -457,10 +457,10 @@ func TestListenAddr(t *testing.T) {
 		port int
 		want string
 	}{
-		{"empty addr uses loopback", "", 8001, "127.0.0.1:8001"},
+		{"empty addr uses loopback", "", 8267, "127.0.0.1:8267"},
 		{"specific addr", "0.0.0.0", 3000, "0.0.0.0:3000"},
 		{"non-standard port", "192.168.1.1", 9000, "192.168.1.1:9000"},
-		{"ipv6 localhost", "::1", 8001, "::1:8001"},
+		{"ipv6 localhost", "::1", 8267, "::1:8267"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

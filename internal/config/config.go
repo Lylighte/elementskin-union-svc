@@ -60,7 +60,7 @@ type Config struct {
 func defaults() Config {
 	var cfg Config
 	cfg.Server.Addr = ""
-	cfg.Server.Port = 8001
+	cfg.Server.Port = 8267
 	cfg.Server.RootPath = ""
 	// Network-address defaults are intentionally empty — they must be
 	// provided explicitly via config file or environment variable in production.
