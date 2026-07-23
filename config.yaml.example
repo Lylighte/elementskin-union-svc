@@ -20,7 +20,7 @@ elementskin:
     scope: "profile.read.any"
 
 storage:
-  path: "./union-svc.db"
+  path: "./data/union-svc.db"
 
 union:
   hub_url: ""
@@ -34,8 +34,9 @@ union:
   # Enable OAuth2 token issuance and verification for Union peers.
   enable_oauth2: true
   # Paths to the OAuth2 signing key pair. Files are created automatically if absent.
-  oauth2_sig_private_key_path: "./oauth2_sig_private.pem"
-  oauth2_sig_public_key_path: "./oauth2_sig_public.pem"
+  # In production (docker-compose), these are under /app/data/ mounted to ./data.
+  oauth2_sig_private_key_path: "./data/oauth2_sig_private.pem"
+  oauth2_sig_public_key_path: "./data/oauth2_sig_public.pem"
 
 tls:
   insecure_skip_verify: false

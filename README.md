@@ -43,7 +43,7 @@ go build ./cmd/union-svc
 
 | 环境变量 | 默认值 | 说明 |
 |---|---|---|
-| `UNION_STORAGE_PATH` | `./union-svc.db` | SQLite 数据库路径 |
+| `UNION_STORAGE_PATH` | `./data/union-svc.db` | SQLite 数据库路径 |
 
 ### Union 网络（全部必填）
 
@@ -56,8 +56,8 @@ go build ./cmd/union-svc
 | `UNION_UNION_CORS_ALLOW_ORIGIN` | - | CORS 允许来源，为空时不发送 CORS 头 |
 | `UNION_UNION_TIMEOUT_SECONDS` | `30` | 与 Hub 通信的超时秒数 |
 | `UNION_UNION_ENABLE_OAUTH2` | `true` | 是否启用 Union OAuth2 协议端点 |
-| `UNION_UNION_OAUTH2_SIG_PRIVATE_KEY_PATH` | `./oauth2_sig_private.pem` | OAuth2 签名私钥文件路径 |
-| `UNION_UNION_OAUTH2_SIG_PUBLIC_KEY_PATH` | `./oauth2_sig_public.pem` | OAuth2 签名公钥文件路径 |
+| `UNION_UNION_OAUTH2_SIG_PRIVATE_KEY_PATH` | `./data/oauth2_sig_private.pem` | OAuth2 签名私钥文件路径 |
+| `UNION_UNION_OAUTH2_SIG_PUBLIC_KEY_PATH` | `./data/oauth2_sig_public.pem` | OAuth2 签名公钥文件路径 |
 
 ### 日志
 

@@ -134,8 +134,8 @@ OAuth2 grant 流程需要一个 session 来标识已登录用户。PHP 使用 Bl
 
 RSA 4096 密钥对，首次启动时自动生成并保存为 PEM 文件：
 
-- 私钥：`oauth2_sig_private.pem`（权限 0600）
-- 公钥：`oauth2_sig_public.pem`（权限 0644）
+- 私钥：`data/oauth2_sig_private.pem`（权限 0600）
+- 公钥：`data/oauth2_sig_public.pem`（权限 0644）
 - 通过 `union.EnsureSigKeyPair` 加载/生成，损坏时返回错误，不自动覆盖
 - 轮换方式：删除文件后重启
 

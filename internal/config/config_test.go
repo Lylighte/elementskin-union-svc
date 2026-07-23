@@ -51,11 +51,11 @@ func TestDefaults(t *testing.T) {
 	if cfg.Union.EnableOAuth2 != true {
 		t.Errorf("Union.EnableOAuth2 = %v, want true", cfg.Union.EnableOAuth2)
 	}
-	if cfg.Union.OAuth2SigPrivateKeyPath != "./oauth2_sig_private.pem" {
-		t.Errorf("Union.OAuth2SigPrivateKeyPath = %q, want ./oauth2_sig_private.pem", cfg.Union.OAuth2SigPrivateKeyPath)
+	if cfg.Union.OAuth2SigPrivateKeyPath != "./data/oauth2_sig_private.pem" {
+		t.Errorf("Union.OAuth2SigPrivateKeyPath = %q, want ./data/oauth2_sig_private.pem", cfg.Union.OAuth2SigPrivateKeyPath)
 	}
-	if cfg.Union.OAuth2SigPublicKeyPath != "./oauth2_sig_public.pem" {
-		t.Errorf("Union.OAuth2SigPublicKeyPath = %q, want ./oauth2_sig_public.pem", cfg.Union.OAuth2SigPublicKeyPath)
+	if cfg.Union.OAuth2SigPublicKeyPath != "./data/oauth2_sig_public.pem" {
+		t.Errorf("Union.OAuth2SigPublicKeyPath = %q, want ./data/oauth2_sig_public.pem", cfg.Union.OAuth2SigPublicKeyPath)
 	}
 	if cfg.Log.Level != "info" {
 		t.Errorf("Log.Level = %q, want info", cfg.Log.Level)
@@ -354,11 +354,11 @@ tls:
 	if cfg.Union.EnableOAuth2 != true {
 		t.Errorf("Union.EnableOAuth2 = %v, want true", cfg.Union.EnableOAuth2)
 	}
-	if cfg.Union.OAuth2SigPrivateKeyPath != "./oauth2_sig_private.pem" {
-		t.Errorf("Union.OAuth2SigPrivateKeyPath = %q, want ./oauth2_sig_private.pem", cfg.Union.OAuth2SigPrivateKeyPath)
+	if cfg.Union.OAuth2SigPrivateKeyPath != "./data/oauth2_sig_private.pem" {
+		t.Errorf("Union.OAuth2SigPrivateKeyPath = %q, want ./data/oauth2_sig_private.pem", cfg.Union.OAuth2SigPrivateKeyPath)
 	}
-	if cfg.Union.OAuth2SigPublicKeyPath != "./oauth2_sig_public.pem" {
-		t.Errorf("Union.OAuth2SigPublicKeyPath = %q, want ./oauth2_sig_public.pem", cfg.Union.OAuth2SigPublicKeyPath)
+	if cfg.Union.OAuth2SigPublicKeyPath != "./data/oauth2_sig_public.pem" {
+		t.Errorf("Union.OAuth2SigPublicKeyPath = %q, want ./data/oauth2_sig_public.pem", cfg.Union.OAuth2SigPublicKeyPath)
 	}
 	if cfg.Union.CORSAllowOrigin != "https://skin.example.com" {
 		t.Errorf("CORSAllowOrigin = %q, want https://skin.example.com", cfg.Union.CORSAllowOrigin)
@@ -451,11 +451,11 @@ union:
 			yamlExtra: "  admin_api_key: \"admin-key\"\n  webhook_secret: \"webhook-secret\"\n  enable_oauth2: false\n",
 			wantErr:   false,
 			assertFn: func(t *testing.T, cfg Config) {
-				if cfg.Union.OAuth2SigPrivateKeyPath != "./oauth2_sig_private.pem" {
-					t.Errorf("OAuth2SigPrivateKeyPath = %q, want ./oauth2_sig_private.pem", cfg.Union.OAuth2SigPrivateKeyPath)
+				if cfg.Union.OAuth2SigPrivateKeyPath != "./data/oauth2_sig_private.pem" {
+					t.Errorf("OAuth2SigPrivateKeyPath = %q, want ./data/oauth2_sig_private.pem", cfg.Union.OAuth2SigPrivateKeyPath)
 				}
-				if cfg.Union.OAuth2SigPublicKeyPath != "./oauth2_sig_public.pem" {
-					t.Errorf("OAuth2SigPublicKeyPath = %q, want ./oauth2_sig_public.pem", cfg.Union.OAuth2SigPublicKeyPath)
+				if cfg.Union.OAuth2SigPublicKeyPath != "./data/oauth2_sig_public.pem" {
+					t.Errorf("OAuth2SigPublicKeyPath = %q, want ./data/oauth2_sig_public.pem", cfg.Union.OAuth2SigPublicKeyPath)
 				}
 			},
 		},

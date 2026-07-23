@@ -67,11 +67,11 @@ func defaults() Config {
 	cfg.Elementskin.BaseURL = ""
 	cfg.Elementskin.OAuth.RedirectURI = ""
 	cfg.Elementskin.ServiceAccount.Scope = "profile.read.any"
-	cfg.Storage.Path = "./union-svc.db"
+	cfg.Storage.Path = "./data/union-svc.db"
 	cfg.Union.TimeoutSeconds = 30
 	cfg.Union.EnableOAuth2 = true
-	cfg.Union.OAuth2SigPrivateKeyPath = "./oauth2_sig_private.pem"
-	cfg.Union.OAuth2SigPublicKeyPath = "./oauth2_sig_public.pem"
+	cfg.Union.OAuth2SigPrivateKeyPath = "./data/oauth2_sig_private.pem"
+	cfg.Union.OAuth2SigPublicKeyPath = "./data/oauth2_sig_public.pem"
 	cfg.Log.Level = "info"
 	return cfg
 }
