@@ -62,6 +62,46 @@ func TestDefaults(t *testing.T) {
 	}
 }
 
+// TestRootPathTrailingSlashStripped verifies that RootPath trailing slashes
+// are removed during Load so downstream path concatenation never produces
+// double-slash paths.
+func TestRootPathTrailingSlashStripped(t *testing.T) {
+	tests := []struct {
+		name string
+		env  string
+		want string
+	}{
+		{"empty stays empty", "", ""},
+		{"no slash stays", "/union-svc", "/union-svc"},
+		{"single slash stripped", "/union-svc/", "/union-svc"},
+		{"multiple slashes stripped", "/union-svc///", "/union-svc"},
+		{"root slash becomes empty", "/", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("UNION_ELEMENTSKIN_BASE_URL", "https://skin.example.com")
+			t.Setenv("UNION_ELEMENTSKIN_OAUTH_CLIENT_ID", "cid")
+			t.Setenv("UNION_ELEMENTSKIN_OAUTH_CLIENT_SECRET", "secret")
+			t.Setenv("UNION_ELEMENTSKIN_OAUTH_REDIRECT_URI", "https://skin.example.com/oauth/callback")
+			t.Setenv("UNION_ELEMENTSKIN_SERVICE_ACCOUNT_CLIENT_ID", "svc-cid")
+			t.Setenv("UNION_ELEMENTSKIN_SERVICE_ACCOUNT_CLIENT_SECRET", "svc-secret")
+			t.Setenv("UNION_UNION_HUB_URL", "https://hub.example.com")
+			t.Setenv("UNION_UNION_MEMBER_KEY", "member-key")
+			t.Setenv("UNION_UNION_ADMIN_API_KEY", "admin-key")
+			t.Setenv("UNION_UNION_WEBHOOK_SECRET", "webhook-secret")
+			t.Setenv("UNION_ROOT_PATH", tt.env)
+
+			cfg, err := Load("")
+			if err != nil {
+				t.Fatalf("Load: %v", err)
+			}
+			if cfg.Server.RootPath != tt.want {
+				t.Errorf("RootPath = %q, want %q", cfg.Server.RootPath, tt.want)
+			}
+		})
+	}
+}
+
 // TestLoadEmptyDefaultsFailsValidation verifies that Load without any config
 // file or environment variables returns a validation error listing all missing
 // required fields.

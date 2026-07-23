@@ -101,6 +101,8 @@ func Load(path string) (Config, error) {
 		return cfg, err
 	}
 
+	cfg.Server.RootPath = strings.TrimRight(cfg.Server.RootPath, "/")
+
 	return cfg, nil
 }
 

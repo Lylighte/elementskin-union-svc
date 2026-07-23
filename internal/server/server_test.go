@@ -448,6 +448,42 @@ func TestRootReturns404ForNonRootPaths(t *testing.T) {
 	}
 }
 
+// TestRootPathPrefixesAllRoutes verifies that a non-empty RootPath is applied
+// to both plain and method-prefixed route patterns without panicking, and that
+// the prefixed paths serve correctly.
+func TestRootPathPrefixesAllRoutes(t *testing.T) {
+	cfg := testConfig("http://127.0.0.1:1")
+	cfg.Server.RootPath = "/union-svc"
+	cfg.Storage.Path = filepath.Join(t.TempDir(), "store.db")
+
+	srv, err := New(cfg, testLogger())
+	if err != nil {
+		t.Fatalf("create server with root_path: %v", err)
+	}
+	defer srv.Close()
+
+	ts := httptest.NewServer(srv.Handler())
+	defer ts.Close()
+
+	resp, err := http.Get(ts.URL + "/union-svc/health")
+	if err != nil {
+		t.Fatalf("GET /union-svc/health: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("/union-svc/health status = %d, want 200", resp.StatusCode)
+	}
+
+	resp, err = http.Get(ts.URL + "/union-svc/api/union/member/")
+	if err != nil {
+		t.Fatalf("GET /union-svc/api/union/member/: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		t.Errorf("/union-svc/api/union/member/ returned 404 — method-prefixed route not registered under root_path")
+	}
+}
+
 func TestOpenStateStoreSetsMaxOpenConnsToOne(t *testing.T) {
 	store, err := OpenStateStore(filepath.Join(t.TempDir(), "states.db"))
 	if err != nil {
