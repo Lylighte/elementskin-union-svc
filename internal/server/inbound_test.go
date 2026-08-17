@@ -874,9 +874,9 @@ func elementskinAdminServer(t *testing.T, profiles []map[string]any, status int)
 				"access_token": "service-token",
 				"token_type":   "Bearer",
 				"expires_in":   3600,
-				"scope":        "profile.read.any",
+				"scope":        "profile.read.any minecraft_profile.read.public",
 			})
-		case "/v1/admin/profiles":
+		case "/v2/admin/profiles":
 			if r.Method != http.MethodGet {
 				t.Errorf("profiles method = %s, want GET", r.Method)
 			}

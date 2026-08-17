@@ -17,7 +17,9 @@ elementskin:
   service_account:
     client_id: ""
     client_secret: ""
-    scope: "profile.read.any"
+    # Space-separated scopes. minecraft_profile.read.public is used to resolve
+    # profile names when processing Element-Skin webhook events.
+    scope: "profile.read.any minecraft_profile.read.public"
 
 storage:
   path: "./data/union-svc.db"
@@ -29,8 +31,12 @@ union:
   timeout_seconds: 30
   # Admin API key used to authenticate internal/administrative endpoints.
   admin_api_key: ""
-  # Webhook secret used to verify signatures on incoming webhooks.
+  # Webhook signing secret (HMAC-SHA256) used to verify Element-Skin webhook
+  # signatures. Must match the signing_secret configured on the Element-Skin
+  # outbound webhook endpoint.
   webhook_secret: ""
+  # Allowed clock skew for incoming webhook timestamps, in seconds.
+  webhook_timestamp_tolerance_seconds: 300
   # Enable OAuth2 token issuance and verification for Union peers.
   enable_oauth2: true
   # Paths to the OAuth2 signing key pair. Files are created automatically if absent.

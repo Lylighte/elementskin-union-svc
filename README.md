@@ -52,7 +52,8 @@ go build ./cmd/union-svc
 | `UNION_UNION_HUB_URL` | - | Union Hub 地址 |
 | `UNION_UNION_MEMBER_KEY` | - | 成员密钥 |
 | `UNION_UNION_ADMIN_API_KEY` | - | 管理接口认证密钥（通过 `openssl rand -hex 32` 生成） |
-| `UNION_UNION_WEBHOOK_SECRET` | - | Webhook 认证密钥（通过 `openssl rand -hex 32` 生成，需与 Element-Skin 调用方一致） |
+| `UNION_UNION_WEBHOOK_SECRET` | - | Webhook 签名密钥（HMAC-SHA256，通过 `openssl rand -hex 32` 生成，需与 Element-Skin 出站 webhook 的 `signing_secret` 一致） |
+| `UNION_UNION_WEBHOOK_TIMESTAMP_TOLERANCE_SECONDS` | `300` | 入站 webhook 时间戳允许的时钟偏差（秒） |
 | `UNION_UNION_CORS_ALLOW_ORIGIN` | - | CORS 允许来源，为空时不发送 CORS 头 |
 | `UNION_UNION_TIMEOUT_SECONDS` | `30` | 与 Hub 通信的超时秒数 |
 | `UNION_UNION_ENABLE_OAUTH2` | `true` | 是否启用 Union OAuth2 协议端点 |
@@ -97,9 +98,14 @@ go build ./cmd/union-svc
 
 ### 6. Webhook 同步
 
-接收来自 skin-backend 的 Webhook 回调，触发角色变化同步到 Union Hub。
-支持的操作：添加（`add`）、更新（`update`）、删除（`delete`）、全量同步（`full_sync`）。空字符串 `action` 等同于 `full_sync`。
-认证方式为 `Authorization: Bearer {webhook_secret}`。
+接收 Element-Skin 主站出站 Webhook 的标准事件回调，触发角色变化同步到 Union Hub。
+支持的事件类型：`profile.created`、`profile.updated`、`profile.deleted`。
+
+- 认证方式：Element-Skin 标准 HMAC-SHA256 签名（`Webhook-Signature` 头 + `Webhook-Timestamp` 时间戳窗口）。
+- 事件 data 只携带 `user_id` 与 `profile_id`，union-svc 通过服务账号回查 `profile.read.any minecraft_profile.read.public`
+  scope 解析角色名后同步到 Hub。
+- 以 `Webhook-Id` 做幂等去重（SQLite `webhook_processed` 表），重复投递不会重复同步。
+- 全量同步由管理端点 `POST /api/union/admin/sync` 触发，不通过 webhook 事件。
 
 ## API 端点
 

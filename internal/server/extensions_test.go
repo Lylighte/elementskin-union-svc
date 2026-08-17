@@ -344,7 +344,10 @@ func TestE2EProfileBindWithUserToken(t *testing.T) {
 	}
 }
 
-func TestE2EWebhookProfileSyncFullSync(t *testing.T) {
+// TestE2EAdminSyncFullSync verifies the full-sync flow through the admin
+// endpoint. Full sync is no longer part of the webhook contract; it is
+// triggered by POST /api/union/admin/sync with the admin API key.
+func TestE2EAdminSyncFullSync(t *testing.T) {
 	profiles := []map[string]any{
 		{"id": "uuid-1", "name": "Steve", "user_id": "u1", "owner_email": "steve@example.com"},
 		{"id": "uuid-2", "name": "Alex", "user_id": "u2", "owner_email": "alex@example.com"},
@@ -375,6 +378,7 @@ func TestE2EWebhookProfileSyncFullSync(t *testing.T) {
 	cfg.Storage.Path = filepath.Join(t.TempDir(), "store.db")
 	cfg.Union.HubURL = hub.URL
 	cfg.Union.MemberKey = "test-member-key"
+	cfg.Union.AdminAPIKey = "test-admin-key"
 	cfg.Union.WebhookSecret = webhookSecret
 	cfg.Elementskin.ServiceAccount.ClientID = "svc-client-id"
 	cfg.Elementskin.ServiceAccount.ClientSecret = "svc-client-secret"
@@ -388,16 +392,15 @@ func TestE2EWebhookProfileSyncFullSync(t *testing.T) {
 	ts := httptest.NewServer(srv.Handler())
 	defer ts.Close()
 
-	req, err := http.NewRequest(http.MethodPost, ts.URL+"/api/union/webhook/profile-sync", strings.NewReader(`{"action":"full_sync"}`))
+	req, err := http.NewRequest(http.MethodPost, ts.URL+"/api/union/admin/sync", nil)
 	if err != nil {
 		t.Fatalf("build request: %v", err)
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+webhookSecret)
+	req.Header.Set("Authorization", "Bearer test-admin-key")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		t.Fatalf("post webhook: %v", err)
+		t.Fatalf("post admin sync: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -414,11 +417,14 @@ func TestE2EWebhookProfileSyncFullSync(t *testing.T) {
 		t.Errorf("profileList = %v, want Steve=uuid-1 Alex=uuid-2", profileList)
 	}
 
-	var respBody map[string]string
+	var respBody map[string]any
 	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
 		t.Fatalf("decode response: %v", err)
 	}
 	if respBody["detail"] != "ok" {
 		t.Errorf("detail = %q, want ok", respBody["detail"])
+	}
+	if respBody["synced"] != float64(2) {
+		t.Errorf("synced = %v, want 2", respBody["synced"])
 	}
 }

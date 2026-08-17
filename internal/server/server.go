@@ -35,6 +35,7 @@ type Server struct {
 	bridge        *bridge.Bridge
 	stateStore    *StateStore
 	sessionStore  *session.Store
+	webhookStore  *WebhookStore
 	httpClient    *http.Client
 	logger        *slog.Logger
 	mux           *http.ServeMux
@@ -80,6 +81,15 @@ func New(cfg config.Config, logger *slog.Logger) (*Server, error) {
 
 	b := bridge.New(cfg.Elementskin.BaseURL, unionClient, manager, serviceTokens, httpClient)
 
+	webhookStore, err := NewWebhookStore(stateStore.db)
+	if err != nil {
+		_ = unionClient.Close()
+		_ = serviceTokens.Close()
+		_ = stateStore.Close()
+		_ = manager.Close()
+		return nil, err
+	}
+
 	s := &Server{
 		cfg:           cfg,
 		manager:       manager,
@@ -88,6 +98,7 @@ func New(cfg config.Config, logger *slog.Logger) (*Server, error) {
 		bridge:        b,
 		stateStore:    stateStore,
 		sessionStore:  sessionStore,
+		webhookStore:  webhookStore,
 		httpClient:    httpClient,
 		logger:        logger,
 		mux:           http.NewServeMux(),
@@ -146,7 +157,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc(s.route("POST /api/union/profile/bindto"), s.withBearerOrSession(s.handleProfileBindTo))
 	s.mux.HandleFunc(s.route("GET /api/union/security/level"), s.withBearerOrSession(s.handleSecurityLevel))
 
-	s.mux.HandleFunc(s.route("POST /api/union/webhook/profile-sync"), s.withWebhookSecret(s.handleProfileSyncWebhook))
+	s.mux.HandleFunc(s.route("POST /api/union/webhook/profile-sync"), s.withWebhookVerify(s.handleProfileSyncWebhook))
 
 	s.mux.HandleFunc(s.route("/admin"), func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")

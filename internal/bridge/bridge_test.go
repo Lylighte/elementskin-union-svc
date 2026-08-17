@@ -156,7 +156,7 @@ func TestBridgeAdminListAllProfilesForSyncAggregatesPaginatedProfiles(t *testing
 	callCount := 0
 	elementskin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
-		if r.URL.Path != "/v1/admin/profiles" {
+		if r.URL.Path != "/v2/admin/profiles" {
 			t.Errorf("unexpected path %s", r.URL.Path)
 		}
 		if got := r.Header.Get("Authorization"); got != "Bearer service-token" {
@@ -219,7 +219,7 @@ func TestBridgeGetUserEmailByProfileNameUsesSingleAdminCall(t *testing.T) {
 	callCount := 0
 	elementskin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		callCount++
-		if r.URL.Path != "/v1/admin/profiles" {
+		if r.URL.Path != "/v2/admin/profiles" {
 			t.Errorf("unexpected path %s", r.URL.Path)
 		}
 		if got := r.Header.Get("Authorization"); got != "Bearer service-token" {

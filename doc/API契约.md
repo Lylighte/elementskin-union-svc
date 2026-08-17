@@ -252,26 +252,54 @@ OAuth2 授权 grant 端点。需要 Session Cookie（来自 `/oauth/callback`）
 
 ### `POST /api/union/webhook/profile-sync`
 
-接收 Element-Skin 的事件钩子回调，同步角色档案到 Hub。
+接收 Element-Skin 主站出站 Webhook 的标准事件回调，同步角色档案到 Hub。
 
-**认证**：`withWebhookSecret`（`Authorization: Bearer {webhook_secret}`）
+**认证**：`withWebhookVerify`（Element-Skin 标准 HMAC-SHA256 签名）
 
-**请求体**：
+**请求头**：
+
+```http
+Content-Type: application/json
+Webhook-Id: evt_...
+Webhook-Timestamp: 1786118400123
+Webhook-Signature: v1=hex(HMAC-SHA256(webhook_secret, timestamp + "." + raw_body))
+```
+
+**请求体**（Element-Skin 标准事件信封）：
 
 ```json
 {
-  "action": "full_sync",
-  "profileList": {}
+  "id": "evt_...",
+  "type": "profile.created",
+  "created_at": 1786118399000,
+  "data": {
+    "user_id": "...",
+    "profile_id": "..."
+  }
 }
 ```
 
-**supported actions**：`add`、`update`、`delete`、`full_sync`
+**支持的事件类型**：
+
+| 事件类型 | union-svc 行为 | 对 Hub 调用 |
+|---|---|---|
+| `profile.created` | 回查 name → 通知 Hub 新增 | `POST /profile` `{id, name}` |
+| `profile.updated` | 回查 name → 通知 Hub 改名 | `PUT /profile/{uuid}` `{name}` |
+| `profile.deleted` | 通知 Hub 删除 | `DELETE /profile/{uuid}` |
+
+- 事件 data 只携带 `user_id` 与 `profile_id`，union-svc 通过服务账号
+  （`profile.read.any minecraft_profile.read.public`）回查角色名后同步到 Hub。
+- 以 `Webhook-Id` 做幂等去重（SQLite `webhook_processed` 表）。
+- 全量同步由管理端点 `POST /api/union/admin/sync` 触发，不通过 webhook 事件。
 
 **响应示例**（200）：
 
 ```json
 {"detail": "ok"}
 ```
+
+**错误响应**：签名/时间戳验证失败返回 `401`；未知事件类型、`Webhook-Id` 不匹配返回 `400`；
+回查或 Hub 同步失败返回 `502`。
 
 ---
 
@@ -286,7 +314,7 @@ OAuth2 授权 grant 端点。需要 Session Cookie（来自 `/oauth/callback`）
 | `withUnionVerify` | `/api/union/member/*`（non-oauth2） | Hub RSA 签名 | 校验 Hub signature header |
 | `withAdminAPIKey` | `/api/union/admin/*` | Config Key | `Authorization: Bearer {key}` |
 | `withBearerToken` | `/api/union/profile/*`、`/api/profiles` | Element-Skin Token | `Authorization: Bearer {token}` |
-| `withWebhookSecret` | `/api/union/webhook/*` | Config Key | `Authorization: Bearer {secret}` |
+| `withWebhookVerify` | `/api/union/webhook/*` | HMAC-SHA256 签名 | `Webhook-Signature` + `Webhook-Timestamp` |
 
 > **CORS**：仅 `/api/union/member/`（hello）和 `/api/union/member/oauth2/*` 受 `CORSAllowOrigin` 配置影响。其余端点为内部通信，不设 CORS。
 

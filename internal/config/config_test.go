@@ -39,8 +39,8 @@ func TestDefaults(t *testing.T) {
 	if cfg.Elementskin.OAuth.RedirectURI != "https://skin.example.com/oauth/callback" {
 		t.Errorf("Elementskin.OAuth.RedirectURI = %q, want https://skin.example.com/oauth/callback", cfg.Elementskin.OAuth.RedirectURI)
 	}
-	if cfg.Elementskin.ServiceAccount.Scope != "profile.read.any" {
-		t.Errorf("Elementskin.ServiceAccount.Scope = %q, want profile.read.any", cfg.Elementskin.ServiceAccount.Scope)
+	if cfg.Elementskin.ServiceAccount.Scope != "profile.read.any minecraft_profile.read.public" {
+		t.Errorf("Elementskin.ServiceAccount.Scope = %q, want profile.read.any minecraft_profile.read.public", cfg.Elementskin.ServiceAccount.Scope)
 	}
 	if cfg.Storage.Path != "/data/union.db" {
 		t.Errorf("Storage.Path = %q, want /data/union.db", cfg.Storage.Path)

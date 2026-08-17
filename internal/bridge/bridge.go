@@ -78,3 +78,19 @@ func (b *Bridge) GetUserEmailByProfileName(ctx context.Context, name string) (st
 	}
 	return "", nil
 }
+
+// GetProfileNameByID resolves a profile ID to its current name using the
+// service account token. It calls the Element-Skin public Minecraft profile
+// endpoint, which requires the minecraft_profile.read.public scope.
+// An empty name with a nil error means the profile no longer exists.
+func (b *Bridge) GetProfileNameByID(ctx context.Context, profileID string) (string, error) {
+	token, err := b.serviceTokens.ServiceAccessToken(ctx)
+	if err != nil {
+		return "", fmt.Errorf("get service access token: %w", err)
+	}
+	name, err := b.elementskin.GetProfileNameByID(ctx, token, profileID)
+	if err != nil {
+		return "", fmt.Errorf("get profile name by id: %w", err)
+	}
+	return name, nil
+}

@@ -95,7 +95,7 @@ func (c *ElementSkinClient) ListAllProfiles(ctx context.Context, token, query st
 		if pages > maxAdminProfilePages {
 			return nil, errors.New("admin profiles pagination exceeded maximum pages")
 		}
-		u, err := url.Parse(c.baseURL + "/v1/admin/profiles")
+		u, err := url.Parse(c.baseURL + "/v2/admin/profiles")
 		if err != nil {
 			return nil, fmt.Errorf("build admin profiles URL: %w", err)
 		}
@@ -251,4 +251,58 @@ func (c *ElementSkinClient) SearchProfilesByName(ctx context.Context, token, nam
 		}
 	}
 	return matched, nil
+}
+
+// minecraftProfileResponse mirrors the Element-Skin
+// GET /v2/minecraft/profiles/{profile_id} response body.
+type minecraftProfileResponse struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+// GetProfileNameByID resolves a profile ID to its current name via the
+// Element-Skin public Minecraft profile endpoint. It requires the
+// minecraft_profile.read.public scope on the service account token.
+// A nil error with an empty name indicates the profile was not found.
+func (c *ElementSkinClient) GetProfileNameByID(ctx context.Context, token, profileID string) (string, error) {
+	profileID = strings.ReplaceAll(profileID, "-", "")
+	u, err := url.Parse(c.baseURL + "/v2/minecraft/profiles/" + url.PathEscape(profileID))
+	if err != nil {
+		return "", fmt.Errorf("build minecraft profile URL: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return "", fmt.Errorf("build minecraft profile request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("execute minecraft profile request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("read minecraft profile response: %w", err)
+	}
+
+	if resp.StatusCode == http.StatusNotFound {
+		return "", nil
+	}
+	if resp.StatusCode >= http.StatusBadRequest {
+		detail := extractDetail(respBody)
+		if detail == "" {
+			detail = string(respBody)
+		}
+		return "", &APIError{Status: resp.StatusCode, Detail: detail}
+	}
+
+	var profile minecraftProfileResponse
+	if err := json.Unmarshal(respBody, &profile); err != nil {
+		return "", fmt.Errorf("decode minecraft profile response: %w", err)
+	}
+	return profile.Name, nil
 }
